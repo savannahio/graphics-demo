@@ -1,16 +1,119 @@
-* { box-sizing: border-box; }
-html, body, #root { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; overscroll-behavior: none;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #fff; -webkit-user-select: none; user-select: none; }
-canvas { display: block; touch-action: none; }
-.ui { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: 6px; padding: 6px;
-  background: rgba(20,20,28,.45); border: 1px solid rgba(255,255,255,.12); border-radius: 999px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); z-index: 10; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 20px); }
-.ui button { appearance: none; border: 0; background: transparent; color: rgba(255,255,255,.7); font: 500 13px/1 inherit; font-family: inherit; padding: 10px 16px; border-radius: 999px; cursor: pointer; transition: all .2s; letter-spacing: .02em; }
-.ui button:hover { color: #fff; background: rgba(255,255,255,.08); }
-.ui button.active { color: #000; background: #fff; }
-.ui .sep { width: 1px; background: rgba(255,255,255,.15); margin: 4px 2px; }
-.top { position: fixed; top: max(14px, env(safe-area-inset-top)); left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 10; }
-.title { font-size: 12px; letter-spacing: .3em; text-transform: uppercase; opacity: .85; }
-.title small { display: block; letter-spacing: .05em; text-transform: none; opacity: .6; margin-top: 6px; font-size: 12px; }
-.fps { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; opacity: .75; text-align: right; }
-.fallback { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; background: radial-gradient(circle at 50% 40%, #2a1a4a, #000); }
-@media (max-width: 520px) { .ui button { padding: 9px 11px; font-size: 12px; } }
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  color: #fff;
+  -webkit-user-select: none;
+  user-select: none;
+}
+canvas {
+  display: block;
+  touch-action: none;
+}
+.ui {
+  position: fixed;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(20, 20, 28, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 10;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100vw - 20px);
+}
+.ui button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font: 500 13px/1 inherit;
+  font-family: inherit;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+.ui button:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+.ui button.active {
+  color: #000;
+  background: #fff;
+}
+.ui .sep {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 4px 2px;
+}
+.top {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 10;
+}
+.title {
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.title small {
+  display: block;
+  letter-spacing: 0.05em;
+  text-transform: none;
+  opacity: 0.6;
+  margin-top: 6px;
+  font-size: 12px;
+}
+.fps {
+  font:
+    12px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  opacity: 0.75;
+  text-align: right;
+}
+.fallback {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 40%, #2a1a4a, #000);
+}
+@media (max-width: 520px) {
+  .ui button {
+    padding: 9px 11px;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,140 @@
+import { Component, Suspense, type RefObject, type ReactNode, useMemo, useRef, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { PerformanceMonitor } from '@react-three/drei';
+import Galaxy from './scenes/Galaxy';
+import Raymarch from './scenes/Raymarch';
+import Showcase from './scenes/Showcase';
+import Effects from './Effects';
+import type { Quality, SceneDef } from './types';
+
+const SCENES: readonly SceneDef[] = [
+  { id: 'galaxy', name: 'Galaxy', hint: 'Drag to orbit · move the pointer to attract stars', C: Galaxy },
+  { id: 'sdf', name: 'Raymarch', hint: 'Drag to orbit the raymarched SDF metaballs', C: Raymarch },
+  { id: 'pbr', name: 'Glass & Chrome', hint: 'Drag to orbit · PBR, transmission & reflections', C: Showcase },
+];
+
+const isMobile = (): boolean =>
+  typeof window !== 'undefined' &&
+  (window.matchMedia?.('(pointer: coarse)').matches ||
+    /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) ||
+    Math.min(innerWidth, innerHeight) < 600);
+
+function webglOK(): boolean {
+  try {
+    const c = document.createElement('canvas');
+    return !!(c.getContext('webgl2') || c.getContext('webgl'));
+  } catch {
+    return false;
+  }
+}
+
+interface FpsProps {
+  out: RefObject<HTMLSpanElement>;
+}
+
+interface FpsAccumulator {
+  t: number;
+  n: number;
+}
+
+function Fps({ out }: FpsProps): null {
+  const acc = useRef<FpsAccumulator>({ t: 0, n: 0 });
+  useFrame((_state, dt: number) => {
+    const a = acc.current;
+    a.t += dt;
+    a.n++;
+    if (a.t >= 0.5) {
+      if (out.current) out.current.textContent = `${Math.round(a.n / a.t)} FPS`;
+      a.t = 0;
+      a.n = 0;
+    }
+  });
+  return null;
+}
+
+interface BoundaryProps {
+  children?: ReactNode;
+}
+
+interface BoundaryState {
+  err: unknown;
+}
+
+class Boundary extends Component<BoundaryProps, BoundaryState> {
+  state: BoundaryState = { err: null };
+  static getDerivedStateFromError(err: unknown): BoundaryState {
+    return { err };
+  }
+  render(): ReactNode {
+    const { err } = this.state;
+    return err ? (
+      <div className="fallback">
+        <div>
+          <h2>Graphics unavailable</h2>
+          <p>{String((err instanceof Error && err.message) || err)}</p>
+        </div>
+      </div>
+    ) : (
+      this.props.children
+    );
+  }
+}
+
+export default function App(): JSX.Element {
+  const mobile = useMemo<boolean>(isMobile, []);
+  const [scene, setScene] = useState<number>(0);
+  const [quality, setQuality] = useState<Quality>(mobile ? 'low' : 'high');
+  const fpsRef = useRef<HTMLSpanElement>(null);
+  const supported = useMemo<boolean>(webglOK, []);
+  const high = quality === 'high';
+  const S: SceneDef = SCENES[scene];
+
+  if (!supported)
+    return (
+      <div className="fallback">
+        <div>
+          <h2>WebGL is not available</h2>
+          <p>This demo needs a browser with WebGL enabled.</p>
+        </div>
+      </div>
+    );
+
+  return (
+    <Boundary>
+      <Canvas
+        key={S.id + quality}
+        dpr={high ? [1, 2] : [0.6, 1]}
+        gl={{ antialias: false, powerPreference: 'high-performance', alpha: false }}
+        camera={{ position: [0, 4, 9], fov: 50, near: 0.1, far: 200 }}
+      >
+        <PerformanceMonitor onDecline={() => setQuality('low')} flipflops={1} />
+        <Suspense fallback={null}>
+          <S.C quality={quality} />
+          <Effects quality={quality} scene={S.id} />
+        </Suspense>
+        <Fps out={fpsRef} />
+      </Canvas>
+      <div className="top">
+        <div className="title">
+          Graphics Demo<small>{S.hint}</small>
+        </div>
+        <div className="fps">
+          <span ref={fpsRef}>-- FPS</span>
+          <br />
+          {high ? 'High' : 'Low'} quality
+        </div>
+      </div>
+      <nav className="ui" data-testid="ui">
+        {SCENES.map((s, i) => (
+          <button key={s.id} className={i === scene ? 'active' : ''} onClick={() => setScene(i)}>
+            {s.name}
+          </button>
+        ))}
+        <span className="sep" />
+        <button className={high ? 'active' : ''} onClick={() => setQuality(high ? 'low' : 'high')}>
+          {high ? 'HQ' : 'LQ'}
+        </button>
+      </nav>
+    </Boundary>
+  );
+}

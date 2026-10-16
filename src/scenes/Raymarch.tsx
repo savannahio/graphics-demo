@@ -1,9 +1,23 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import type { SceneProps } from '../types';
 
-const vert = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
-const frag = (STEPS) => /* glsl */`
+interface RaymarchUniforms {
+  [uniform: string]: THREE.IUniform;
+  uTime: THREE.IUniform<number>;
+  uRes: THREE.IUniform<THREE.Vector2>;
+  uRot: THREE.IUniform<THREE.Vector2>;
+  uZoom: THREE.IUniform<number>;
+}
+
+interface DragPoint {
+  x: number;
+  y: number;
+}
+
+const vert: string = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
+const frag = (STEPS: number): string => /* glsl */ `
 precision highp float;
 uniform float uTime; uniform vec2 uRes; uniform vec2 uRot; uniform float uZoom;
 varying vec2 vUv;
@@ -63,12 +77,21 @@ void main(){
   gl_FragColor = vec4(col, 1.0);
 }`;
 
-export default function Raymarch({ quality }) {
+export default function Raymarch({ quality }: SceneProps): JSX.Element {
   const { size, gl } = useThree();
-  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uRot: { value: new THREE.Vector2(0.5, 0.25) }, uZoom: { value: -6.5 } }), []);
-  const fragment = useMemo(() => frag(quality === 'high' ? 140 : 70), [quality]);
-  const drag = useRef(null), target = useRef(new THREE.Vector2(0.5, 0.25));
-  useFrame((_, dt) => {
+  const uniforms = useMemo<RaymarchUniforms>(
+    () => ({
+      uTime: { value: 0 },
+      uRes: { value: new THREE.Vector2(1, 1) },
+      uRot: { value: new THREE.Vector2(0.5, 0.25) },
+      uZoom: { value: -6.5 },
+    }),
+    [],
+  );
+  const fragment = useMemo<string>(() => frag(quality === 'high' ? 140 : 70), [quality]);
+  const drag = useRef<DragPoint | null>(null),
+    target = useRef<THREE.Vector2>(new THREE.Vector2(0.5, 0.25));
+  useFrame((_state, dt: number) => {
     uniforms.uTime.value += dt;
     uniforms.uRes.value.set(size.width, size.height);
     if (!drag.current) target.current.x += dt * 0.08;
@@ -76,23 +99,43 @@ export default function Raymarch({ quality }) {
   });
   useEffect(() => {
     const el = gl.domElement;
-    const down = e => { drag.current = { x: e.clientX, y: e.clientY }; };
-    const move = e => {
+    const down = (e: PointerEvent): void => {
+      drag.current = { x: e.clientX, y: e.clientY };
+    };
+    const move = (e: PointerEvent): void => {
       if (!drag.current) return;
       target.current.x += (e.clientX - drag.current.x) * 0.006;
       target.current.y = Math.max(-0.3, Math.min(1.2, target.current.y + (e.clientY - drag.current.y) * 0.004));
       drag.current = { x: e.clientX, y: e.clientY };
     };
-    const up = () => (drag.current = null);
-    const wheel = e => { uniforms.uZoom.value = Math.max(-12, Math.min(-3.5, uniforms.uZoom.value - e.deltaY * 0.004)); };
-    el.addEventListener('pointerdown', down); window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+    const up = (): void => {
+      drag.current = null;
+    };
+    const wheel = (e: WheelEvent): void => {
+      uniforms.uZoom.value = Math.max(-12, Math.min(-3.5, uniforms.uZoom.value - e.deltaY * 0.004));
+    };
+    el.addEventListener('pointerdown', down);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
     el.addEventListener('wheel', wheel, { passive: true });
-    return () => { el.removeEventListener('pointerdown', down); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); el.removeEventListener('wheel', wheel); };
+    return () => {
+      el.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      el.removeEventListener('wheel', wheel);
+    };
   }, [gl, uniforms]);
   return (
     <mesh frustumCulled={false}>
       <planeGeometry args={[2, 2]} />
-      <shaderMaterial key={quality} vertexShader={vert} fragmentShader={fragment} uniforms={uniforms} depthTest={false} depthWrite={false} />
+      <shaderMaterial
+        key={quality}
+        vertexShader={vert}
+        fragmentShader={fragment}
+        uniforms={uniforms}
+        depthTest={false}
+        depthWrite={false}
+      />
     </mesh>
   );
 }
